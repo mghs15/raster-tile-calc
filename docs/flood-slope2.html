@@ -67,9 +67,11 @@ body { margin:0; padding:0;}
   
   <input type="checkbox" id="switchStat" onchange="switchStat();" checked>統計
   <br>
-  <input type="checkbox" id="switchLayer1" onchange="switchLayer1();">元データ１
+  <input type="checkbox" id="switchLayer1" onchange="switchLayer1();">洪水浸水想定
   <br>
-  <input type="checkbox" id="switchLayer2" onchange="switchLayer2();">元データ２
+  <input type="checkbox" id="switchLayer2" onchange="switchLayer2();">傾斜量図
+  <br>
+  <input type="checkbox" id="switchLayer3" onchange="switchLayer3();">治水地形分類図
   <br>
   <input type="checkbox" id="switchBack" onchange="switchBack();" checked>背景
   
@@ -304,8 +306,18 @@ const processImage = async (params) => {
     //console.log(v1, v2);
     if( v1 < 0 && v2 > -1 && v2 < 255*5/90){
       imageData.data[i * 4]     = 0;
+      imageData.data[i * 4 + 1] = 100;
+      imageData.data[i * 4 + 2] = 255;
+      imageData.data[i * 4 + 3] = 100;
+    } else if( v1 < 0 && v2 > -1 && v2 < 255*10/90){
+      imageData.data[i * 4]     = 0;
       imageData.data[i * 4 + 1] = 255;
       imageData.data[i * 4 + 2] = 255;
+      imageData.data[i * 4 + 3] = 100;
+    } else if( v1 < 0 && v2 > -1 && v2 < 255*15/90){
+      imageData.data[i * 4]     = 0;
+      imageData.data[i * 4 + 1] = 255;
+      imageData.data[i * 4 + 2] = 100;
       imageData.data[i * 4 + 3] = 100;
     } else {
       imageData.data[i * 4]     = 0;
@@ -394,6 +406,32 @@ const setOverlayStyles = () => {
     }
   });
  
+  
+  if(map.getLayer("layer3")){
+    map.removeLayer("layer3");
+    map.removeSource("layer3");
+  }
+  
+  map.addSource("layer3", {
+    "type": "raster",
+    "minzoom":3,
+    "maxzoom":16,
+    "tiles":["https://cyberjapandata.gsi.go.jp/xyz/lcmfc2/{z}/{x}/{y}.png"],
+    "tileSize": 256,
+    "attribution":"<a href='https://maps.gsi.go.jp/development/ichiran.html#' target='_blank'>地理院タイル</a>"
+  });
+  map.addLayer({ 
+    "id":"layer3",
+    "type": "raster",
+    "source": "layer3",
+    "paint":{
+      "raster-opacity": 0.5
+    },
+    "layout":{
+      "visibility": "none"
+    }
+  });
+  
   if(map.getLayer("stat")){
     map.removeLayer("stat");
     map.removeSource("stat");
@@ -462,6 +500,22 @@ const switchLayer2 = () => {
   const checked = document.getElementById("switchLayer2").checked;
   layers.forEach( layer => {
     if(layer.source == "layer2"){
+      if(!layer.layout) layer.layout ={};
+      if(checked){
+        map.setLayoutProperty(layer.id, "visibility", "visible");
+      }else{
+        map.setLayoutProperty(layer.id, "visibility", "none");
+      }
+    }
+  });
+}
+
+const switchLayer3 = () => {
+  const style = map.getStyle();
+  const layers = style.layers;
+  const checked = document.getElementById("switchLayer3").checked;
+  layers.forEach( layer => {
+    if(layer.source == "layer3"){
       if(!layer.layout) layer.layout ={};
       if(checked){
         map.setLayoutProperty(layer.id, "visibility", "visible");
